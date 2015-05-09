@@ -4,7 +4,6 @@
  * socket.io room)
  */
 
-
 /*
  * Helper Functions
  */
@@ -16,23 +15,32 @@ function extend(a,b) {
     return a;
 }
 
-
-
 var PORT = 3000;
 
 // Preliminaries
 var express = require('express');
-var app = express();
 var http = require('http');
+var websock = require('socket.io');
+var bmw = require('browserify-middleware');
+
+bmw.settings({
+    transform: [
+        ['reactify', { global: true }],
+        ['es6-arrow-function', { global: true }],
+        ['uglifyify', { global: true }],
+    ],
+});
+
+var app = express();
 var server = http.createServer(app);
-var io = require('socket.io').listen(server);
+var io = websock.listen(server);
 var game_init = require('./public/js/game_init');
 io.set('log level', 1) // reduce the debug messages
 
 // Statically server pages from the public directory
-app.configure( function() {
-    app.use(express.static(__dirname + '/public'));
-});
+app.use(express.static(__dirname + '/public'));
+
+app.get('/app.js', bmw("src/app.js", { watchify: true }))
 
 // Start the server
 server.listen(PORT);
